@@ -19,7 +19,12 @@ io.on('connection', socket => {
     socket.on('enter_room', (user: User, callback) => {
 
         const userIsAlreadyConnected: User | undefined = users.find(connectedUser => connectedUser.userSocketId === user.userSocketId);
-        if (userIsAlreadyConnected) return;
+        if (userIsAlreadyConnected) {
+            callback({
+                status: 'failed',
+                message: 'Usuário já conectado'
+            })
+        };
         
         const roomNameSnakeCase = user.roomName.split(' ').join('_');
         let selectedRoom: Room | undefined = rooms.find(room => room.roomName === roomNameSnakeCase);
@@ -44,11 +49,21 @@ io.on('connection', socket => {
         }
         
         const isUserInRoom = selectedRoom.players.find(player => player.userSocketId === user.userSocketId);
-        if (isUserInRoom) return;
+        if (isUserInRoom) {
+            callback({
+                status: 'failed',
+                message: 'Sala cheia'
+            })
+        };
             
         users.push(user);
         selectedRoom.players.push(user);
         socket.join(roomNameSnakeCase);
+
+        callback({
+            status: 'success',
+            message: 'Conectado com sucesso'
+        })
 
         console.log('Users -> ', users);
         console.log('Rooms -> ', rooms);
