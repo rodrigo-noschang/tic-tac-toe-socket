@@ -8,7 +8,8 @@ interface User {
 
 interface Room {
     roomName: string,
-    players: User[]
+    players: User[],
+    turn: string
 }
 
 let users: User[] = [];
@@ -32,10 +33,12 @@ io.on('connection', socket => {
         if (!selectedRoom) {
             selectedRoom = {
                 roomName: roomNameSnakeCase,
-                players: []
+                players: [],
+                turn: ''
             }
             
             rooms.push(selectedRoom);
+            selectedRoom.turn = user.userName;
         } else {
             // Limites 2 users per room
             if (selectedRoom.players.length === 2) {
@@ -83,8 +86,10 @@ io.on('connection', socket => {
         userRoom.players = userRoom.players.filter(player => player.userSocketId !== disconnectedUser.userSocketId);
     })
 
-    socket.on('send_greeting', (user: User) => {
-        const roomNameSnakeCase = user.roomName.split(' ').join('_');
-        io.to(roomNameSnakeCase).emit('receive_greeting', `Hello you all from room ${user.roomName} ${Math.random()}`);
+    socket.on('get_room_info', roomName => {
+        const room = rooms.find(room => room.roomName === roomName);
+        const roomNameSnakeCase = roomName.split(' ').join('_');
+
+        io.to(roomNameSnakeCase).emit('receive_room_info', room);
     })
 })
