@@ -22,32 +22,33 @@ io.on('connection', socket => {
         if (userIsAlreadyConnected) return;
         
         const roomNameSnakeCase = user.roomName.split(' ').join('_');
-        const selectedRoom = rooms.find(room => room.roomName === roomNameSnakeCase);
+        let selectedRoom: Room | undefined = rooms.find(room => room.roomName === roomNameSnakeCase);
 
         if (!selectedRoom) {
-            const newRoom: Room = {
+            selectedRoom = {
                 roomName: roomNameSnakeCase,
                 players: []
             }
             
-            rooms.push(newRoom);
+            rooms.push(selectedRoom);
         } else {
             // Limites 2 users per room
             if (selectedRoom.players.length === 2) {
                 callback({
                     status: 'failed',
-                    message: 'capacitade limite'
+                    message: 'Sala cheia'
                 })
                 return;
             }
-            
-            const isUserInRoom = selectedRoom.players.find(player => player.userSocketId === user.userSocketId);
-            if (isUserInRoom) return;
-            
-            users.push(user);
-            selectedRoom.players.push(user);
-            socket.join(roomNameSnakeCase);
+
         }
+        
+        const isUserInRoom = selectedRoom.players.find(player => player.userSocketId === user.userSocketId);
+        if (isUserInRoom) return;
+            
+        users.push(user);
+        selectedRoom.players.push(user);
+        socket.join(roomNameSnakeCase);
 
         console.log('Users -> ', users);
         console.log('Rooms -> ', rooms);
