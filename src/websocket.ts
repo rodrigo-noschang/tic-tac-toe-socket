@@ -15,6 +15,10 @@ interface Room {
 let users: User[] = [];
 const rooms: Room[] = [];
 
+const roomNameToSnakeCase = (roomName: string): string => {
+    return roomName.split(' ').join('_');
+}
+
 io.on('connection', socket => {
 
     socket.on('enter_room', (user: User, callback) => {
@@ -27,7 +31,7 @@ io.on('connection', socket => {
             })
         };
         
-        const roomNameSnakeCase = user.roomName.split(' ').join('_');
+        const roomNameSnakeCase = roomNameToSnakeCase(user.roomName);
         let selectedRoom: Room | undefined = rooms.find(room => room.roomName === roomNameSnakeCase);
 
         if (!selectedRoom) {
@@ -86,10 +90,25 @@ io.on('connection', socket => {
         userRoom.players = userRoom.players.filter(player => player.userSocketId !== disconnectedUser.userSocketId);
     })
 
-    socket.on('get_room_info', roomName => {
+    socket.on('get_room_info', (roomName: string) => {
         const room = rooms.find(room => room.roomName === roomName);
-        const roomNameSnakeCase = roomName.split(' ').join('_');
+        const roomNameSnakeCase = roomNameToSnakeCase(roomName);
 
         io.to(roomNameSnakeCase).emit('receive_room_info', room);
+    })
+
+    socket.on('change_player', (roomName: string) => {
+        const selectedRoom: Room | undefined = rooms.find(room => room.roomName === roomName);
+
+        if (selectedRoom) {
+            const nextPlayer: User | undefined = selectedRoom.players.find(player => player.userName !== selectedRoom.turn);
+            
+            if (nextPlayer) {
+                selectedRoom.turn = nextPlayer.userName;    
+            }
+        }
+
+        const roomNameSnakeCase = roomNameToSnakeCase(roomName);
+        io.to(roomNameSnakeCase).emit('receive_change_player', selectedRoom);
     })
 })
