@@ -8,12 +8,13 @@ interface User {
 
 interface Room {
     roomName: string,
-    players: User[],
-    turn: string
+    turn: string | undefined,
+    player1: User | undefined,
+    player2: User | undefined
 }
 
 let users: User[] = [];
-const rooms: Room[] = [];
+let rooms: Room[] = [];
 
 const roomNameToSnakeCase = (roomName: string): string => {
     return roomName.split(' ').join('_');
@@ -22,14 +23,6 @@ const roomNameToSnakeCase = (roomName: string): string => {
 io.on('connection', socket => {
 
     socket.on('enter_room', (user: User, callback) => {
-
-        const userIsAlreadyConnected: User | undefined = users.find(connectedUser => connectedUser.userSocketId === user.userSocketId);
-        if (userIsAlreadyConnected) {
-            callback({
-                status: 'failed',
-                message: 'Usuário já conectado'
-            })
-        };
         
         const roomNameSnakeCase = roomNameToSnakeCase(user.roomName);
         let selectedRoom: Room | undefined = rooms.find(room => room.roomName === roomNameSnakeCase);
@@ -37,34 +30,30 @@ io.on('connection', socket => {
         if (!selectedRoom) {
             selectedRoom = {
                 roomName: roomNameSnakeCase,
-                players: [],
-                turn: ''
+                player1: user,
+                player2: undefined,
+                turn: undefined
             }
             
             rooms.push(selectedRoom);
-            selectedRoom.turn = user.userName;
+            selectedRoom.turn = user.userSocketId;
         } else {
-            // Limites 2 users per room
-            if (selectedRoom.players.length === 2) {
+            if (!selectedRoom.player1) {
+                selectedRoom.player1 = user;
+
+            } else if (!selectedRoom.player2) {
+                selectedRoom.player2 = user;
+            
+            } else {
                 callback({
                     status: 'failed',
                     message: 'Sala cheia'
                 })
-                return;
             }
-
         }
-        
-        const isUserInRoom = selectedRoom.players.find(player => player.userSocketId === user.userSocketId);
-        if (isUserInRoom) {
-            callback({
-                status: 'failed',
-                message: 'Sala cheia'
-            })
-        };
             
         users.push(user);
-        selectedRoom.players.push(user);
+        
         socket.join(roomNameSnakeCase);
 
         callback({
@@ -77,17 +66,26 @@ io.on('connection', socket => {
     })
 
     socket.on('disconnect', () => {
-        const disconnectedUser: User | undefined = users.find(connectedUser => connectedUser.userSocketId === socket.id);
-        if (!disconnectedUser) return;
+        // Finds the disconnecting User and remove him from the list
+        const disconnectingUser: User | undefined = users.find(user => user.userSocketId === socket.id);
+        if (!disconnectingUser) return;
 
-        // Remove user from users array: MAY GENERATE CONNECTION PROBLEMS
-        users = users.filter(connectedUser => connectedUser.userSocketId !== disconnectedUser.userSocketId);
+        users = users.filter(user => user.userSocketId !== disconnectingUser.userSocketId);
 
-        // Remove user from his room:
-        const userRoom = rooms.find(room => room.roomName === disconnectedUser.roomName);
-        if (!userRoom) return;
+        // Finds the room he was in, and puts undefined in his place.
+        const disconnectingUserRoom: Room | undefined = rooms.find(room => room.roomName === disconnectingUser.roomName);
+        if (!disconnectingUserRoom) return;
 
-        userRoom.players = userRoom.players.filter(player => player.userSocketId !== disconnectedUser.userSocketId);
+        if (disconnectingUserRoom.player1?.userSocketId === disconnectingUser.userSocketId) disconnectingUserRoom.player1 = undefined;
+        if (disconnectingUserRoom.player2?.userSocketId === disconnectingUser.userSocketId) disconnectingUserRoom.player2 = undefined;
+
+        // If there is no player left, remove the room
+        if (!disconnectingUserRoom.player1 && !disconnectingUserRoom.player2) {
+            rooms = rooms.filter(room => room.roomName !== disconnectingUserRoom.roomName);
+        } else {
+            // If there is one player left, update the turn to him
+            disconnectingUserRoom.turn = disconnectingUserRoom.player1?.userSocketId || disconnectingUserRoom.player2?.userSocketId;
+        }
     })
 
     socket.on('get_room_info', (roomName: string) => {
@@ -102,20 +100,20 @@ io.on('connection', socket => {
         io.to(roomNameSnakeCase).emit('receive_play', {line, column, symbol})
     })
 
-    socket.on('change_player', (roomName: string) => {
-        const selectedRoom: Room | undefined = rooms.find(room => room.roomName === roomName);
+    // socket.on('change_player', (roomName: string) => {
+    //     const selectedRoom: Room | undefined = rooms.find(room => room.roomName === roomName);
 
-        if (selectedRoom) {
-            const nextPlayer: User | undefined = selectedRoom.players.find(player => player.userName !== selectedRoom.turn);
+    //     if (selectedRoom) {
+    //         const nextPlayer: User | undefined = selectedRoom.players.find(player => player.userName !== selectedRoom.turn);
             
-            if (nextPlayer) {
-                selectedRoom.turn = nextPlayer.userName;    
-            }
-        }
+    //         if (nextPlayer) {
+    //             selectedRoom.turn = nextPlayer.userName;    
+    //         }
+    //     }
 
-        const roomNameSnakeCase = roomNameToSnakeCase(roomName);
-        io.to(roomNameSnakeCase).emit('receive_change_player', selectedRoom);
-    })
+    //     const roomNameSnakeCase = roomNameToSnakeCase(roomName);
+    //     io.to(roomNameSnakeCase).emit('receive_change_player', selectedRoom);
+    // })
 
 
 })
