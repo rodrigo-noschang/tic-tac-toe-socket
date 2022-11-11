@@ -10,4 +10,17 @@ const getRoomAndUserInfo = (roomName: string ) => {
     return room
 }
 
-export { getRoomAndUserInfo, roomNameToSnakeCase };
+const findRoomAndChangeTurn = (roomName: string, currentPlayer: string) => {
+    const room = rooms.find(room => room.roomName === roomName);
+    if (!room) return;
+
+    const nextPlayerSocketId = currentPlayer === 'player1' ?
+        room.player2?.userSocketId :
+        room.player1?.userSocketId;
+
+    room.turn = nextPlayerSocketId;
+
+    return room;
+}
+
+export { getRoomAndUserInfo, roomNameToSnakeCase, findRoomAndChangeTurn };

@@ -17,8 +17,10 @@ const findUserRoomAndRemoveHim = (disconnectingUser: IUser) => {
     const disconnectingUserRoom: IRoom | undefined = rooms.find(room => room.roomName === disconnectingUser.roomName);
     if (!disconnectingUserRoom) return;
 
-    if (disconnectingUserRoom.player1?.userSocketId === disconnectingUser.userSocketId) disconnectingUserRoom.player1 = undefined;
-    if (disconnectingUserRoom.player2?.userSocketId === disconnectingUser.userSocketId) disconnectingUserRoom.player2 = undefined;
+    if (disconnectingUserRoom.player1?.userSocketId === disconnectingUser.userSocketId) {
+        disconnectingUserRoom.player1 = disconnectingUserRoom.player2;
+    }
+    disconnectingUserRoom.player2 = undefined;
 
     return disconnectingUserRoom;
 }
