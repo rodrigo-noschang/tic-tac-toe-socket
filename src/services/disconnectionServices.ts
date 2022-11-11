@@ -1,4 +1,5 @@
 import { rooms, users, setRooms, setUsers } from "../database/data";
+import { roomNameToSnakeCase } from "./roomInfoServices";
 import { IRoom, IUser } from "../database/types";
 
 const findUserAndRemoveHim = (socket:any) => {
@@ -44,6 +45,8 @@ const disconnectUser = (socket: any) => {
     if (!disconnectingUserRoom) return;
 
     deleteRoomOrUpdatePlayerTurn(disconnectingUserRoom);    
+
+    socket.leave(roomNameToSnakeCase(disconnectingUserRoom.roomName));
 
     console.log('Disconnection Users -> ', users);
     console.log('Disconnection Rooms -> ', rooms);
