@@ -34,7 +34,6 @@ const deleteRoomOrUpdatePlayerTurn = (disconnectingUserRoom: IRoom) => {
     }
 }
 
-
 const disconnectUser = (socket: any) => {
     const disconnectingUser: IUser | undefined = findUserAndRemoveHim(socket);
     if (!disconnectingUser) return;
