@@ -1,5 +1,5 @@
-import { rooms, users, setRooms, setUsers } from "./data";
-import { IRoom, IUser } from "./types";
+import { rooms, users, setRooms, setUsers } from "../database/data";
+import { IRoom, IUser } from "../database/types";
 
 const findUserAndRemoveHim = (socket:any) => {
     // Finds user and remove him from users list
@@ -38,13 +38,15 @@ const disconnectUser = (socket: any) => {
     const disconnectingUser: IUser | undefined = findUserAndRemoveHim(socket);
     if (!disconnectingUser) return;
 
-    const disconnectingUserRoom = findUserRoomAndRemoveHim(disconnectingUser);
+    const disconnectingUserRoom: IRoom | undefined = findUserRoomAndRemoveHim(disconnectingUser);
     if (!disconnectingUserRoom) return;
 
     deleteRoomOrUpdatePlayerTurn(disconnectingUserRoom);    
 
     console.log('Disconnection Users -> ', users);
     console.log('Disconnection Rooms -> ', rooms);
+
+    return disconnectingUserRoom;
 }
 
 export { disconnectUser };

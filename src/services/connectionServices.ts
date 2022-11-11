@@ -1,9 +1,6 @@
-import { rooms, users } from "./data";
-import { IUser, IRoom } from "./types";
-
-const roomNameToSnakeCase = (roomName: string): string => {
-    return roomName.split(' ').join('_');
-}
+import { rooms, users } from "../database/data";
+import { IUser, IRoom } from "../database/types";
+import { roomNameToSnakeCase } from "./roomInfoServices";
 
 const createRoomAndInsertFirstPlayer = (selectedRoom: IRoom | undefined, user: IUser, roomNameSnakeCase: string) => {
     selectedRoom = {
@@ -17,7 +14,7 @@ const createRoomAndInsertFirstPlayer = (selectedRoom: IRoom | undefined, user: I
     selectedRoom.turn = user.userSocketId;
 }
 
-const insertNewPlayer = (selectedRoom: IRoom, user: IUser, callback: any) => {
+const insertNewPlayer = (selectedRoom: IRoom, user: IUser, callback: any): boolean => {
     // If there already is a player 1, set as player 2, if both players are
     // already in the room, stop the process and return a fail message.
     

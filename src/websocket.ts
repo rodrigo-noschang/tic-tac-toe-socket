@@ -1,6 +1,12 @@
 import { io } from './httpServer';
+import { IRoom } from './database/types';
 import { connectToRoom } from './services/connectionServices';
 import { disconnectUser } from './services/disconnectionServices';
+import { getRoomAndUserInfo } from './services/roomInfoServices';
+
+const roomNameToSnakeCase = (roomName: string) => {
+    return roomName.split(' ').join('_');
+}
 
 io.on('connection', socket => {
 
@@ -9,15 +15,20 @@ io.on('connection', socket => {
     })
 
     socket.on('disconnect', () => {
-        disconnectUser(socket);
+        const room: IRoom | undefined = disconnectUser(socket);
+        if (!room) return;
+        
+        const roomNameSnakeCase = roomNameToSnakeCase(room.roomName);
+        console.log('On disconnect -> ', room);
+        io.to(roomNameSnakeCase).emit('receive_get_room_info', room);
     })
 
-    // socket.on('get_room_info', (roomName: string) => {
-    //     const room = rooms.find(room => room.roomName === roomName);
-    //     const roomNameSnakeCase = roomNameToSnakeCase(roomName);
+    socket.on('get_room_info', (roomName: string) => {
+        const room = getRoomAndUserInfo(roomName);
+        const roomNameSnakeCase = roomNameToSnakeCase(roomName);
 
-    //     io.to(roomNameSnakeCase).emit('receive_room_info', room);
-    // })
+        io.to(roomNameSnakeCase).emit('receive_get_room_info', room );
+    })
 
     // socket.on('register_play', ({line, column, roomName, symbol}) => {
     //     const roomNameSnakeCase = roomNameToSnakeCase(roomName);
@@ -38,6 +49,4 @@ io.on('connection', socket => {
     //     const roomNameSnakeCase = roomNameToSnakeCase(roomName);
     //     io.to(roomNameSnakeCase).emit('receive_change_player', selectedRoom);
     // })
-
-
 })
