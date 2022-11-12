@@ -3,7 +3,9 @@ import { IRoom } from './database/types';
 import { connectToRoom } from './services/connectionServices';
 import { disconnectUser } from './services/disconnectionServices';
 import { getRoomAndUserInfo, findRoomAndChangeTurn } from './services/roomInfoServices';
-import { rooms, users } from './database/data';
+import { checkForWin } from './services/winChecks';
+import { users } from './database/data';
+import { IUser } from './database/types';
 
 const roomNameToSnakeCase = (roomName: string) => {
     return roomName.split(' ').join('_');
@@ -16,12 +18,9 @@ io.on('connection', socket => {
     })
 
     socket.on('disconnect', () => {
-        console.log('Chamou');
         const room: IRoom | undefined = disconnectUser(socket);
         if (!room) return;
-        
-        // console.log('On disconnect Users -> ', users);
-        // console.log('On disconnect Rooms -> ', rooms);
+
         const roomNameSnakeCase = roomNameToSnakeCase(room.roomName);
         io.to(roomNameSnakeCase).emit('receive_get_room_info', room);
         socket.emit('receive_disconnect');
@@ -40,10 +39,22 @@ io.on('connection', socket => {
         io.to(roomNameSnakeCase).emit('receive_get_room_info', room );
     })
 
-    socket.on('register_new_board', (roomName, updatedBoard) => {
-        const roomNameSnakeCase = roomNameToSnakeCase(roomName);
+    socket.on('register_new_board_and_check_for_win', (roomName: string, updatedBoard: string[][], line: number | undefined, column: number | undefined) => {
+        // If there is no value for line and column, than the user is just reseting the board
+        // and there is no need to check for wins. Gotta remember that these values can be zero.
+        let win = false;
+        let winner: IUser | undefined;
+
+        if (line !== undefined && column !== undefined) {
+            win = checkForWin(updatedBoard, line, column);
+
+            if (win) {
+                winner = users.find(user => user.userSocketId === socket.id);
+            }
+        }
         
-        io.to(roomNameSnakeCase).emit('receive_register_new_board', updatedBoard);
+        const roomNameSnakeCase = roomNameToSnakeCase(roomName);
+        io.to(roomNameSnakeCase).emit('receive_register_new_board_and_check_for_win', updatedBoard, win, winner);
     })
     
     socket.on('change_turn', (roomName, currentPlayer) => {
