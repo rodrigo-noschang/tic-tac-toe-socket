@@ -12,10 +12,10 @@ dotenv.config();
 
 const io = new Server(httpServer, {
     cors: {
-        origin: process.env.ALLOWED_CORS_ORIGIN,
+        origin: "*",
         methods: ['POST', 'GET'],
         allowedHeaders: ['checkers-header'],
-        credentials: true
+        credentials: true,
     }
 });
 
