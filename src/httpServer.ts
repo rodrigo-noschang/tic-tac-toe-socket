@@ -13,14 +13,7 @@ dotenv.config();
 const io = new Server(httpServer, {
     cors: {
         origin: process.env.ALLOWED_CORS_ORIGIN,
-        methods: ['POST', 'GET'],
-        allowedHeaders: ['checkers-header'],
         credentials: true,
-    },
-    allowRequest: (req, callback) => {
-        req.headers['access-control-allow-origin'] = process.env.ALLOWED_CORS_ORIGIN;
-        const noOriginHeader = req.headers.origin === undefined;
-        callback(null, noOriginHeader);
     }
 });
 
