@@ -11,12 +11,16 @@ const httpServer = http.createServer(app);
 dotenv.config();
 
 const io = new Server(httpServer, {
-    // cors: {
-    //     origin: "*",
-    //     methods: ['POST', 'GET'],
-    //     allowedHeaders: ['checkers-header'],
-    //     credentials: true,
-    // }
+    cors: {
+        origin: process.env.ALLOWED_CORS_ORIGIN,
+        methods: ['POST', 'GET'],
+        allowedHeaders: ['checkers-header'],
+        credentials: true,
+    },
+    allowRequest: (req, callback) => {
+        const noOriginHeader = req.headers.origin === undefined;
+        callback(null, noOriginHeader);
+    }
 });
 
 
