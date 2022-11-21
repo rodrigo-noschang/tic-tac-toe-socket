@@ -18,6 +18,7 @@ const io = new Server(httpServer, {
         credentials: true,
     },
     allowRequest: (req, callback) => {
+        req.headers['access-control-allow-origin'] = process.env.ALLOWED_CORS_ORIGIN;
         const noOriginHeader = req.headers.origin === undefined;
         callback(null, noOriginHeader);
     }
