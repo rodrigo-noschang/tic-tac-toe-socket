@@ -4,7 +4,7 @@ import { roomNameToSnakeCase } from "./roomInfoServices";
 
 const createRoomAndInsertFirstPlayer = (selectedRoom: IRoom | undefined, user: IUser, roomNameSnakeCase: string) => {
     selectedRoom = {
-        roomName: roomNameSnakeCase,
+        roomName: user.roomName,
         player1: user,
         player2: undefined,
         turn: undefined
@@ -30,7 +30,7 @@ const insertNewPlayer = (selectedRoom: IRoom, user: IUser, callback: any): boole
 
 const connectToRoom = (socket: any, user: IUser, callback: any) => {
     const roomNameSnakeCase = roomNameToSnakeCase(user.roomName);
-    let selectedRoom: IRoom | undefined = rooms.find(room => room.roomName === roomNameSnakeCase);
+    let selectedRoom: IRoom | undefined = rooms.find(room => room.roomName === user.roomName);
 
     if (!selectedRoom) {
         createRoomAndInsertFirstPlayer(selectedRoom, user, roomNameSnakeCase);
